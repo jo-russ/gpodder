@@ -153,6 +153,14 @@ Item {
     }
 
     function togglePlayback(episode) {
+        // Don't accept playback event from headphones button if application is not in the foreground
+        // to avoid playing audio from gpodder when system media player is used
+        if (!Qt.application.active) {
+            // if playing - allow to pause it
+            if (audioPlayer.paused) {
+                return
+            }
+        }
         controller.currentEpisodeChanging(episode);
 
         if (mediaPlayer.episode == episode && audioPlayer.status !== 7) {
@@ -373,4 +381,3 @@ Item {
 
     }
 }
-
