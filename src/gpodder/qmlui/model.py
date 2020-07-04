@@ -147,6 +147,7 @@ class QEpisode(QObject):
             if playing:
                 self._episode.playback_mark()
             self._qt_playing = playing
+            self._save_progress()
             self.changed.emit()
 
     qplaying = Property(bool, _playing, _set_playing, notify=changed)
@@ -221,9 +222,28 @@ class QEpisode(QObject):
         if current_position == 0: return
         if current_position != self._episode.current_position:
             self._episode.current_position = current_position
+            self._save_progress()
             self.changed.emit()
 
     qposition = Property(int, _position, _set_position, notify=changed)
+
+    def _save_progress(self):
+        # Save playback progress to a file (on tmpfs) so it can be used in another app (like billboard for example)
+        stats_file = "/tmp/gpodder.now"
+        try:
+            f = open(stats_file, "w")
+            os.chmod(stats_file, 0o666)
+            f.write("\t".join([
+                str(os.getpid()),
+                self._episode.parent.title,
+                self._episode.title,
+                str(self._episode.current_position),
+                str(self._episode.total_time),
+                str(self._playing())
+                ]))
+                f.close()
+        except:
+            pass
 
     def _duration(self):
         return self._episode.total_time
@@ -471,5 +491,3 @@ class EpisodeSubsetView(QObject):
         return self._new_count
 
     qnew = Property(int, _new, notify=changed)
-
-
